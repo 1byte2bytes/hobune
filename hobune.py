@@ -81,11 +81,16 @@ def genMeta(meta):
 print("Populating channels list")
 for root, subdirs, files in os.walk(ytpath):
     #sort videos by date
-    files.sort(reverse = True)
+    #files.sort(reverse = True)
+    files.sort(key=lambda x: os.path.getmtime(os.path.join(root,x)), reverse=True)
     for file in (file for file in files if file.endswith(".info.json")):
         try:
             with open(os.path.join(root,file),"r") as f:
                 v = json.load(f)
+
+            if v.get("_type") == "playlist":
+                continue
+
             if "/channels/" in root:
                 channelid = v.get("uploader_id",v["channel_id"])
                 if not channelid in channels:
@@ -113,8 +118,8 @@ for root, subdirs, files in os.walk(ytpath):
                 ["title","id","custom_thumbnail","view_count","upload_date","removed"]
             ]
             channels[channelid]["videos"].append(v)
-        except:
-            print(f"Error processing {file}")
+        except Exception as e:
+            print(f"Error processing {file}: {e}")
 
 # Add channels to main navbar dropdown (but only if less than 25, otherwise the dropdown menu gets too long)
 if len(channels) < 25:
@@ -157,6 +162,10 @@ for root, subdirs, files in os.walk(ytpath):
         try:
             with open(os.path.join(root,file),"r") as f:
                 v = json.load(f)
+
+            if v.get("_type") == "playlist":
+                continue
+
             # Set mp4 path
             mp4path = f"{os.path.join(ytpathweb + root[len(ytpath):], file[:-len('.info.json')])}.mp4"
             for ext in ["mp4","webm","mkv"]:
@@ -267,8 +276,8 @@ for root, subdirs, files in os.walk(ytpath):
                         )
                     )
                 )
-        except:
-            print(f"Error processing {file}")
+        except Exception as e:
+            print(f"Error processing {file}: {e}")
 
 # Create channel pages
 print("Creating channel pages")
